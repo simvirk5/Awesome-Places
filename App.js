@@ -1,79 +1,70 @@
-import React, { Component } from 'react';
-import { StyleSheet, Text, View, TextInput, Button } from 'react-native';
-import ListItem from './src/components/ListItem/ListItem';
+import React, { Component } from "react";
+import { StyleSheet, View } from "react-native";
+import { connect } from 'react-redux';
+import PlaceInput from "./src/components/PlaceInput/PlaceInput";
+import PlaceList from "./src/components/PlaceList/PlaceList";
+import PlaceDetail from "./src/components/PlaceDetail/PlaceDetail";
+import { addPlace, deletePlace, selectPlace, deselectPlace } from './src/store/actions/index';
 
-export default class App extends Component {
-  state= {
-    placeName:'',
-    places: []
-  }
+class App extends Component {
 
-  placeNameChangedHandler = val => {
-    this.setState({
-      placeName: val
-    })
-  }
-
-  placeSubmitHandler = () => {
-    if(this.state.placeName.trim()==='') {
-      return;
-    }
-    this.setState(prevState => {
-      return {
-        places: prevState.places.concat(prevState.placeName)
-      }
-    })
+  placeAddedHandler = placeName => {
+    this.props.onAddPlace(placeName);
   };
 
+  placeDeletedHandler = () => {
+   this.props.onDeletePlace();
+  };
+
+  modalClosedHandler = () => {
+    this.props.onDeselectPlace();
+  };
+
+  placeSelectedHandler = key => {
+    this.props.onSelectPlace(key);
+  };
 
   render() {
-    const placesOutput=this.state.places.map((place,i) => (
-      <ListItem key= {i} placeName={place} />
-      ));
     return (
       <View style={styles.container}>
-        <View style={styles.inputContainer}>
-          <TextInput
-          style={styles.placeInput}
-          placeholder="An awesome place" 
-          value={this.state.placeName} 
-          onChangeText={this.placeNameChangedHandler}
-          />
-          <Button title="Add"
-          style={styles.buttonInput} 
-          onPress={this.placeSubmitHandler}
-          />
-        </View>
-        <View style={styles.listContainer}>{placesOutput}</View>
+        <PlaceDetail
+          selectedPlace={this.props.selectedPlace}
+          onItemDeleted={this.placeDeletedHandler}
+          onModalClosed={this.modalClosedHandler}
+        />
+        <PlaceInput onPlaceAdded={this.placeAddedHandler} />
+        <PlaceList
+          places={this.props.places}
+          onItemSelected={this.placeSelectedHandler}
+        />
       </View>
     );
   }
 }
 
-//stylesheet componenet is allowing to create objects that can assign to style property of the elements
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-  },
-  inputContainer: {
-    // flex: 1,
-    width: "100%",
-    flexDirection:'row',
-    justifyContent:'space-between',
+    padding: 26,
+    backgroundColor: "#fff",
     alignItems: "center",
-  },
-  placeInput: {
-    width: "70%"
-  },
-  buttonInput: {
-    width: "30%"
-  },
-  listContainer: {
-    width: "100%"
+    justifyContent: "flex-start"
   }
 });
+
+const mapStateToProps = state => {
+  return {
+    places: state.places.places,
+    selectedPlace: state.places.selectedPlace
+  }
+}
+
+const mapDispatchToProps = dispatch => {
+  return {
+    onAddPlace: (name) => dispatch (addPlace(name)),
+    onDeletePlace: () => dispatch(deletePlace()),
+    onSelectPlace: (key) => dispatch(selectPlace(key)),
+    onDeselectPlace: () => dispatch(deselectPlace())
+  }
+}
+export default connect(mapStateToProps, mapDispatchToProps)(App);
